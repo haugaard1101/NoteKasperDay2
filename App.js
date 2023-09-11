@@ -1,61 +1,66 @@
+import { app, database } from './firebase'
+import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { StatusBar } from 'expo-status-bar';
-import { Button, StyleSheet, Text, View, FlatList, TouchableOpacity} from 'react-native';
-import { TextInput } from 'react-native-web';
 import { useState } from 'react';
+import { StyleSheet, FlatList, Button, View, TextInput, Text } from 'react-native';
+import { useCollection } from 'react-firebase-hooks/firestore'; //install with: $ npm install react-firebase-hooks
+
 
 export default function App() {
-
-  const [text, setText] = useState('') //"hook" ligesom session
-  const [noteList, setNoteList] = useState([]);
-
+  const [text, setText] = useState('')
+  const [editObj, setEditObj] = useState(null)
+  const [values, loading, error] = useCollection(collection(database, "notes"))
+  const data = values?.docs.map((doc) => ({...doc.data(), id: doc.id}))
   
-function addBtnPressed(){
-  console.log("blah blah: " + text)
-  if (text.trim() !== '') {
-    setNoteList([...noteList, {headline: text, expanded: false}]);
-    setText('');
+  async function buttonHandler(){
+    try{
+    await addDoc(collection(database, "notes"), {
+      text: text
+    })
+    }catch(err){
+      console.log("fejl i DB " + err)
+    }
   }
-  console.log("list: " + noteList)
 
-  //gem teksten i en liste----------------------------------
-
-  function toggleExpanded(index) {
-    const updatedList = [...noteList];
-    updatedList[index].expanded = !updatedList[index].expanded;
-    setNoteList(updatedList);
+  async function deleteDocument(id){
+      await deleteDoc(doc(database, "notes", id))
   }
-}
+
+  function viewUpdateDialog(item){
+    // få noget at blive synligt
+    setEditObj(item)
+  }
+
+  async function saveUpdate(){
+      await updateDoc(doc(database, "notes", editObj.id), {
+        text: text
+      })
+      setText("")
+      setEditObj(null)
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-      <TextInput 
-      style={styles.input}
-      placeholder='Add a note' 
-      value={text}
-      onChangeText={(txt)=>setText(txt)}
-      />
+      { editObj && 
+        <View>
+          <TextInput defaultValue={editObj.text} onChangeText={(txt) => setText(txt)} />
+          <Text onPress={saveUpdate}>Save</Text>
+        </View> 
+      }
 
-
-      <Button title='knap'onPress={addBtnPressed}/>
-
-
+      <TextInput style={styles.textInput}  onChangeText={(txt) => setText(txt)} />
+      <Button title='Press Me' onPress={buttonHandler} ></Button>
       <FlatList
-      style={styles.list}
-        data={noteList}
-        renderItem={({ item, index }) => (
-          <TouchableOpacity onPress={() => toggleExpanded(index)}>
-            <View>
-            <Text style={styles.headline}>{item.headline}</Text>
-              {item.expanded && <Text style={styles.expandedText}>{item.headline}</Text>}
-            </View>
-          </TouchableOpacity>
-        )}
-        keyExtractor={(item, index) => index.toString()}
+        data={data}
+        renderItem={(note) => 
+          <View>
+            <Text>{note.item.text}</Text>
+            <Text onPress={() => deleteDocument(note.item.id)}>Delete</Text>
+            <Text onPress={() => viewUpdateDialog(note.item)}>Update</Text>
+          </View>
+      }
       />
-
-
+      <StatusBar style="auto" />
     </View>
   );
 }
@@ -63,45 +68,48 @@ function addBtnPressed(){
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#f5f5f5', // Light gray background
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 16, // Add some padding
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  input: {
-    width: '100%',
+  textInput: {
+    backgroundColor: '#fff', // White text input background
+    minWidth: 300,
     padding: 10,
+    marginBottom: 10, // Add some spacing between text inputs
     borderWidth: 1,
-    borderColor: '#ccc',
-    marginBottom: 10,
+    borderColor: '#ccc', // Gray border
+    borderRadius: 4, // Rounded corners
   },
-  list: {
-    width: '100%',
+  addButton: {
+    backgroundColor: '#007AFF', // Blue button background
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 4,
   },
-  item: {
+  addButtonText: {
+    color: '#fff', // White text color for button
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  listItem: {
     backgroundColor: '#fff',
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 8,
+    padding: 16,
+    marginBottom: 8,
+    borderRadius: 4,
     borderWidth: 1,
     borderColor: '#ccc',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  headline: {
+  listItemText: {
     fontSize: 18,
-    fontWeight: 'bold',
   },
-  expandedText: {
-    marginTop: 10,
-    color: '#666',
+  deleteButton: {
+    color: 'red', // Red text color for delete button
+    fontSize: 16,
+  },
+  updateButton: {
+    color: 'blue', // Blue text color for update button
+    fontSize: 16,
   },
 });
