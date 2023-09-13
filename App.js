@@ -5,6 +5,11 @@ import { useState } from 'react';
 import { StyleSheet, FlatList, Button, View, TextInput, Text } from 'react-native';
 import { useCollection } from 'react-firebase-hooks/firestore'; //install with: $ npm install react-firebase-hooks
 
+import {NavigationContainer} from '@react-navigation/native'; // npm install @react-navigation/native
+import {createNativeStackNavigator} from '@react-navigation/native-stack'; // npm install @react-navigation/native-stack
+import {StyleSheet, View, Button, Text, TextInput} from 'react-native'
+import { useState } from 'react'
+
 
 export default function App() {
   const [text, setText] = useState('')
@@ -12,6 +17,8 @@ export default function App() {
   const [values, loading, error] = useCollection(collection(database, "notes"))
   const data = values?.docs.map((doc) => ({...doc.data(), id: doc.id}))
   
+
+    
   async function buttonHandler(){
     try{
     await addDoc(collection(database, "notes"), {
@@ -55,41 +62,44 @@ export default function App() {
         renderItem={(note) => 
           <View>
             <Text>{note.item.text}</Text>
-            <Text onPress={() => deleteDocument(note.item.id)}>Delete</Text>
-            <Text onPress={() => viewUpdateDialog(note.item)}>Update</Text>
+            <Text style={styles.deleteButton} onPress={() => deleteDocument(note.item.id)}>Delete</Text>
+            <Text style={styles.updateButton} onPress={() => viewUpdateDialog(note.item)}>Update</Text>
           </View>
       }
       />
       <StatusBar style="auto" />
     </View>
   );
+  
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5', // Light gray background
+    backgroundColor: '#f5f5f5',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16, // Add some padding
+    padding: 16,
+    borderWidth: 1,          // Add border
+    borderColor: 'black',   // Border color
   },
   textInput: {
-    backgroundColor: '#fff', // White text input background
+    backgroundColor: '#fff',
     minWidth: 300,
     padding: 10,
-    marginBottom: 10, // Add some spacing between text inputs
-    borderWidth: 1,
-    borderColor: '#ccc', // Gray border
-    borderRadius: 4, // Rounded corners
+    marginBottom: 10,
+    borderWidth: 1,          // Add border
+    borderColor: 'black',   // Border color
+    borderRadius: 4,
   },
   addButton: {
-    backgroundColor: '#007AFF', // Blue button background
+    backgroundColor: '#007AFF',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 4,
   },
   addButtonText: {
-    color: '#fff', // White text color for button
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -98,18 +108,24 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 8,
     borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    borderWidth: 1,          // Add border
+    borderColor: 'black',   // Border color
   },
   listItemText: {
     fontSize: 18,
   },
   deleteButton: {
-    color: 'red', // Red text color for delete button
+    color: 'red',
     fontSize: 16,
+    borderRadius: 4,
+    borderWidth: 1,          // Add border
+    borderColor: 'black',   // Border color
   },
   updateButton: {
-    color: 'blue', // Blue text color for update button
+    color: 'blue',
     fontSize: 16,
+    borderRadius: 4,
+    borderWidth: 1,          // Add border
+    borderColor: 'black',   // Border color
   },
 });
