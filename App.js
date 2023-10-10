@@ -2,13 +2,12 @@ import { app, database } from './firebase'
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { StyleSheet, FlatList, Button, View, TextInput, Text } from 'react-native';
+import { StyleSheet, FlatList, Button, View, TextInput, Text, Image } from 'react-native';
 import { useCollection } from 'react-firebase-hooks/firestore'; //install with: $ npm install react-firebase-hooks
+import * as ImagePicker from 'expo-image-picker'
 
-import {NavigationContainer} from '@react-navigation/native'; // npm install @react-navigation/native
-import {createNativeStackNavigator} from '@react-navigation/native-stack'; // npm install @react-navigation/native-stack
-import {StyleSheet, View, Button, Text, TextInput} from 'react-native'
-import { useState } from 'react'
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 
 export default function App() {
@@ -16,9 +15,53 @@ export default function App() {
   const [editObj, setEditObj] = useState(null)
   const [values, loading, error] = useCollection(collection(database, "notes"))
   const data = values?.docs.map((doc) => ({...doc.data(), id: doc.id}))
-  
+  const [imagePath, setImagePath] = useState(null)
 
+  const ListPage = ({navigation, route}) => {
+
+    const myList = [{key:1, name: "Anna"}, {key:2, name: "Bob"}]
+
+    function handleButton (){
+    navigation.navigate('DetailPage')
+    }
     
+      return (
+          <View>
+              <Text> Hej </Text>
+              <FlatList 
+                data={myList}
+                renderItem{(note) => <Button title={note.item.name}></Button>}
+                />
+          </View>
+      )
+    }
+    
+    const DetailPage = ({navigation, route}) => {
+      return (
+          <View>
+              <Text> andre ting </Text>
+          </View>
+      )
+    }
+
+  const Stack = createNativeStackNavigator()
+  return (
+<NavigationContainer>
+  <Stack.Navigator initialRouteName = 'ListPage'>
+<Stack.Screen
+ name = 'ListPage'
+component ={ListPage}
+/>
+<Stack.Screen
+ name = 'DetailPage'
+component ={DetailPage}
+/>
+  </Stack.Navigator>
+</NavigationContainer>
+  );
+
+
+
   async function buttonHandler(){
     try{
     await addDoc(collection(database, "notes"), {
@@ -46,7 +89,17 @@ export default function App() {
       setEditObj(null)
   }
 
+  async function launchImagePicker() {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true
+    })
+    if(!result.canceled){
+setImagePath(result.assets[0].uri)
+    }
+  }
+
   return (
+
     <View style={styles.container}>
       { editObj && 
         <View>
@@ -67,11 +120,14 @@ export default function App() {
           </View>
       }
       />
+<Image style = {{width: 200, heigh: 200}}source = {{uri:imagePath}}/>
+      <Button title = 'Pick image' onPress={launchImagePicker}/>
       <StatusBar style="auto" />
     </View>
   );
   
 }
+
 
 const styles = StyleSheet.create({
   container: {
